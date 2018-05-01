@@ -1,2 +1,3 @@
 # makehuman-plugins
-A set of makehuman plugins for use in the recogni pipeline(s)
+
+A set of MakeHuman plugins for use in the Recogni pipeline.
