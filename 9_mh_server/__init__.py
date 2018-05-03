@@ -1,15 +1,12 @@
-#!/usr/bin/python
-
+""" MH Server plugin entry-point. See the load() and unload() functions.
+"""
 import gui3d, gui
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from server import ServerThread
-
-################################################################################
-
-task = None
+import factory
 
 ################################################################################
 
@@ -30,15 +27,12 @@ class MHServerTaskView(gui3d.TaskView):
         self.human = gui3d.app.selectedHuman
         gui3d.TaskView.__init__(self, category, "MHServer")
 
-        box = self.addLeftWidget(gui.GroupBox("Server settings"))
-        self.toggle = box.addWidget(gui.CheckBox("Server toggle"))
-
-        @self.toggle.mhEvent
+        fr_left = self.addLeftWidget(gui.GroupBox("Settings:"))
+        self.txt_port    = fr_left.addWidget(gui.TextEdit(text="18830"))
+        self.btn_restart = fr_left.addWidget(gui.Button("Restart"))
+        @self.btn_restart.mhEvent
         def onClicked(e):
-            if self.toggle.selected:
-                self.start_server()
-            else:
-                self.stop_server()
+            self.restart_server()
 
         self.logbox = self.addTopWidget(gui.DocumentEdit())
         self.logbox.setText("")
@@ -55,13 +49,14 @@ class MHServerTaskView(gui3d.TaskView):
         self.log("Got data: %s" % (str(data)))
         jc = gui3d.app.mhapi.internals.JsonCall(str(data))
         rc = self.server.conn
-        rc.send("DONE!")
+        jc = factory.run(self, jc)
+        rc.send(jc.serialize())
         rc.close()
 
 
     def start_server(self):
         self.log("Trying to start server thread ...")
-        self.server = ServerThread()
+        self.server = ServerThread(port=int(self.txt_port.text, 10))
         self.logbox.connect(self.server, SIGNAL("log(QString)"), self.log)
         self.logbox.connect(self.server, SIGNAL("evaluate(QString)"), self.evaluate)
         self.server.start()
@@ -75,19 +70,38 @@ class MHServerTaskView(gui3d.TaskView):
         self.server.stop()
         self.server = None
 
+
+    def restart_server(self):
+        self.stop_server()
+        self.start_server()
+
+
 ################################################################################
 
-""" Define the `load(app)` and `unload(app)` interfaces so that makehuman can
-    instantiate our plugin as well.
+class Loader():
+    task = None
+
+
+    def load(self, app):
+        category  = app.getCategory("MHServer")
+        self.task = category.addTask(MHServerTaskView(category))
+        self.task.start_server()
+
+
+    def unload(self, app):
+        if self.task:
+            self.task.stop_server()
+
+loader = Loader()
+
+################################################################################
+
+""" Interface functions required to register with makehuman's plugin system.
 """
 
 def load(app):
-    global task
-    category = app.getCategory("MHServer")
-    task     = category.addTask(MHServerTaskView(category))
+    return loader.load(app)
 
 
 def unload(app):
-    global task
-    if task:
-        task.stop_server()
+    return loader.unload(app)
