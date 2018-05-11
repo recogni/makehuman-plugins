@@ -1,9 +1,8 @@
 """ Socket server implementation.  Listens and reports received text.
 """
 import gui3d, gui
-import mh
+import json
 import time
-import socket
 
 import tornado
 from tornado import ioloop, web
@@ -19,29 +18,35 @@ MAX_BUF_SIZE = 8192
 
 ################################################################################
 
-class PingHandler(tornado.web.RequestHandler):
-    def get(self):
-        print "HTTP GET /"
-        self.write("GET /")
+def CommandHandler(qt):
+    class _handler(tornado.web.RequestHandler):
+        def get(self):
+            print "HTTP GET /"
+            self.write("/command only supports POST requests\r\n")
+        def post(self):
+            if self.request and self.request.body:
+                print "HTTP POST / {%s}" % (self.request.body)
+                qt.emit(SIGNAL("evaluate(QString)"), QString(self.request.body))
+    return _handler
 
-
-class AgeHandler(tornado.web.RequestHandler):
-    def get(self):
-        print "HTTP GET /age"
-        self.write("GET /age")
 
 ################################################################################
 
 class ServerThread(QThread):
     """ ServerThread abstracts a threaded server using `QThread`s.
     """
-    port = None
-    app  = None
+    parent = None
+    port   = None
+    app    = None
 
 
     def __init__(self, parent=None, port=18830):
         QThread.__init__(self, parent)
         self.port = port
+
+
+    def set_taskview(self, tv):
+        self.taskview = tv
 
 
     def log(self, message):
@@ -54,12 +59,9 @@ class ServerThread(QThread):
             the `needs_exit` boolean is setup (or if there is a failure during
             bind / startup).
         """
-        routes = [
-            (r"/",     PingHandler),
-            (r"/ping", PingHandler),
-        ]
-        routes.extend(factory.get_routes())
-        self.app = tornado.web.Application(routes)
+        self.app = tornado.web.Application([
+            (r"/command", CommandHandler(self)),
+        ])
 
         print "Server listening on port :%d" % (self.port)
         self.app.listen(self.port)

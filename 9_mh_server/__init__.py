@@ -2,6 +2,9 @@
 """
 import gui3d, gui
 
+import mh
+from core import G
+
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
@@ -46,11 +49,7 @@ class MHServerTaskView(gui3d.TaskView):
 
     def evaluate(self, data, conn=None):
         self.log("Got data: %s" % (str(data)))
-        jc = gui3d.app.mhapi.internals.JsonCall(str(data))
-        rc = self.server.conn
-        jc = factory.run(self, jc)
-        rc.send(jc.serialize())
-        rc.close()
+        print self.human.mesh
 
 
     def start_server(self):
@@ -58,6 +57,8 @@ class MHServerTaskView(gui3d.TaskView):
         self.server = ServerThread(port=int(self.txt_port.text, 10))
         self.logbox.connect(self.server, SIGNAL("log(QString)"), self.log)
         self.logbox.connect(self.server, SIGNAL("evaluate(QString)"), self.evaluate)
+
+        self.server.set_taskview(self)
         self.server.start()
 
 
