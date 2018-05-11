@@ -30,6 +30,11 @@ def register(name, description, *arg_descs):
     return wrapper
 
 
+def get_routes():
+    return []
+
+
+# TODO: This is not needed
 def run(taskview, jc):
     cmd = jc.getFunction()
     if cmd not in command_map:

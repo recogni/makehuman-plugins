@@ -5,6 +5,9 @@ import mh
 import time
 import socket
 
+import tornado
+from tornado import ioloop, web
+
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
@@ -16,15 +19,24 @@ MAX_BUF_SIZE = 8192
 
 ################################################################################
 
+class PingHandler(tornado.web.RequestHandler):
+    def get(self):
+        print "HTTP GET /"
+        self.write("GET /")
+
+
+class AgeHandler(tornado.web.RequestHandler):
+    def get(self):
+        print "HTTP GET /age"
+        self.write("GET /age")
+
+################################################################################
+
 class ServerThread(QThread):
     """ ServerThread abstracts a threaded server using `QThread`s.
     """
-
-    needs_exit = False  # signal server teardown
-    socket     = None   # socket to listen on
-    json       = None   # latest jsonCall object that needs to be processed
-    conn       = None   # current connection
-    port       = None
+    port = None
+    app  = None
 
 
     def __init__(self, parent=None, port=18830):
@@ -42,50 +54,20 @@ class ServerThread(QThread):
             the `needs_exit` boolean is setup (or if there is a failure during
             bind / startup).
         """
-        self.log("Opening server socket ...")
-        try:
-            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.socket.bind(("127.0.0.1", self.port))
-        except socket.error as e:
-            self.log("Unable to bind to listen addr: " + e[1])
-            return
+        routes = [
+            (r"/",     PingHandler),
+            (r"/ping", PingHandler),
+        ]
+        routes.extend(factory.get_routes())
+        self.app = tornado.web.Application(routes)
 
-        self.log("Server listening on port 18830")
-        self.socket.listen(0)
-
-        while not self.needs_exit:
-            self.log("Waiting on new connection")
-            try:
-                c, a = self.socket.accept()
-                if c and not self.needs_exit:
-                    data = c.recv(MAX_BUF_SIZE)
-                    self.log("Connected to %s:%d" % (a[0], a[1]))
-                    self.log("Got data from client: %s" % (str(data)))
-
-                    self.conn = c
-                    self.emit(SIGNAL("evaluate(QString)"), data)
-            except socket.error as e:
-                pass
+        print "Server listening on port :%d" % (self.port)
+        self.app.listen(self.port)
+        tornado.ioloop.IOLoop.current().start()
 
 
     def stop(self):
-        if not self.needs_exit:
-            self.log("Shutting down socket")
-            self.needs_exit = True
+        if self.app:
+            print "Server shutting down ..."
+            self.app.stop()
 
-            try:
-                self.socket.shutdown(socket.SHUT_RDWR)
-            except socket.error as e:
-                pass
-            self.socket.close()
-            time.sleep(0.1)
-
-
-    @factory.register(
-        ["test", "debug"],
-        "Test / debug command")
-    def debug(self, jc):
-        self.log("DEBUG COMMAND CALLED")
-        jc.setData("YAY!")
-        return jc
