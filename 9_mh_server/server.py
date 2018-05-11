@@ -70,6 +70,7 @@ class ServerThread(QThread):
         QThread.__init__(self, parent)
         self.port = port
 
+
     def run(self):
         """ `run` is invoked when the QThread is started.
 
@@ -89,12 +90,14 @@ class ServerThread(QThread):
         self.server.listen(self.port)
         tornado.ioloop.IOLoop.current().start()
 
+
     def set_taskview(self, tv):
         """ `set_taskview` is called by the `TaskView`.  For some reason the
             `parent` property in `__init__` is None.  There must be a more
             elegant way to grab this info.
         """
         self.taskview = tv
+
 
     def add_socket(self, sock):
         """ `add_socket` allows the socket handler to register a newly connected
@@ -103,12 +106,14 @@ class ServerThread(QThread):
         if sock not in self.sockets:
             self.sockets.append(sock)
 
+
     def remove_socket(self, sock):
         """ `remove_socket` removes a disconnected socket from the server's
             socket list.
         """
         if sock in self.sockets:
             self.sockets.remove(sock)
+
 
     def broadcast(self, msg):
         """ `broadcast` sends a message to all connected sockets.
@@ -123,16 +128,19 @@ class ServerThread(QThread):
             except:
                 pass
 
+
     def command(self, message):
         """ `command` emits the `message` as a signal to the taskview thread.
         """
         self.emit(SIGNAL("command(QString)"), QString(message))
+
 
     def log(self, message):
         """ `log` logs a message to the taskview.
         """
         self.emit(SIGNAL("log(QString)"), QString(message))
         print message
+
 
     def stop(self):
         """ `stop` stops the server socket.

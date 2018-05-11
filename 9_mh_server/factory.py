@@ -58,10 +58,13 @@ def run(tv, cmd, args):
     arguments = entry["arguments"]
     i         = 0
 
+    print args
     if len(args) > len(arguments):
         args = args[:len(arguments)]
+    print args
 
     for i in range(len(args)):
+        print "i == %d" % (i)
         # Edge case for no arguments, shows up as empty list.
         if i == 0 and args[i] == []:
             break
@@ -87,7 +90,7 @@ def run(tv, cmd, args):
             fwd_args.append(de)
             pass
 
-    i += 1
+    print "I == %d about to invoke" % (i)
     while i < len(arguments):
         # Append default argument for missing / optional param.
         fwd_args.append(arguments[i][2])

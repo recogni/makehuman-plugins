@@ -42,6 +42,14 @@ class MHServerTaskView(gui3d.TaskView):
         self.logbox.setLineWrapMode(gui.DocumentEdit.NoWrap)
 
 
+    def bootstrap(self, app):
+        """ `bootstrap` allows this TaskView to figure out dependent task views
+            to trigger downstream functions.
+        """
+        self.pose_lib = app.getTask("Pose/Animate", "Pose")
+        self.skel_lib = app.getTask("Pose/Animate", "Skeleton")
+
+
     def log(self, msg):
         """ Logs a message to the text box `log`.
         """
@@ -51,7 +59,7 @@ class MHServerTaskView(gui3d.TaskView):
 
 
     def command(self, msg, conn=None):
-        words     = str(msg).split(" ")
+        words     = str(msg).rstrip().split(" ")
         cmd, args = words[0], words[1:]
         factory.run(self, cmd, args)
 
@@ -89,14 +97,36 @@ class MHServerTaskView(gui3d.TaskView):
     def debug(self, x, y, z):
         self.log("Got debug(%d, %d, %d)" % (x, y, z))
 
+
+    @factory.register(
+        "set_pose",
+        "Set the humans pose to the specified bvh file",
+        ["pose_path", str, "data/poses/tpose.bvh", "path to pose file"])
+    def set_human_pose(self, pose_path):
+        # Trigger the QT file chooser action with our pose_path to trick the
+        # 3_libraries_pose.py module to load the correct pose.
+        self.pose_lib.filechooser.onFileSelected(pose_path)
+
+
+    @factory.register(
+        "set_skeleton",
+        "Set the humans skeleton from the specified .mhskel file",
+        ["skel_path", str, "data/rigs/game_engine.mhskel", "path to .mhskel file"])
+    def set_human_skeleton(self, skel_path):
+        self.skel_lib.filechooser.onFileSelected(skel_path)
+
+
+
 ################################################################################
 
 class Loader():
     task = None
 
     def load(self, app):
-        category  = app.getCategory("MHServer")
+        category = app.getCategory("MHServer")
+
         self.task = category.addTask(MHServerTaskView(category))
+        self.task.bootstrap(app)
         self.task.start_server()
 
     def unload(self, app):
