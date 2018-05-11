@@ -88,32 +88,72 @@ class MHServerTaskView(gui3d.TaskView):
         self.start_server()
 
 
+    """ -----------------------------------------------------------------------
+
+        Registered makehuman commands.
+
+    """
+
+    """ Modeling :: Main
+    """
     @factory.register(
-        ["test", "debug"],
-        "Test / debug command",
-        ["x", int, 1, "x value"],
-        ["y", int, 2, "y value"],
-        ["z", int, 3, "z value"])
-    def debug(self, x, y, z):
-        self.log("Got debug(%d, %d, %d)" % (x, y, z))
-
+        "set_age",
+        "Set the human's age",
+        ["value", float, 0, "parameter value (between 1.0 and 90.0"])
+    def setAge(self, age):
+        age = min(max(age, 1.0), 90.0)
+        G.mhapi.modifiers.setAge(age)
 
     @factory.register(
-        "set_pose",
-        "Set the humans pose to the specified bvh file",
-        ["pose_path", str, "data/poses/tpose.bvh", "path to pose file"])
-    def set_human_pose(self, pose_path):
-        # Trigger the QT file chooser action with our pose_path to trick the
-        # 3_libraries_pose.py module to load the correct pose.
-        self.pose_lib.filechooser.onFileSelected(pose_path)
+        "set_weight",
+        "Set the human's weight",
+        ["value", float, 0, "parameter value (between 50%% and 150%%"])
+    def setWeight(self, weight):
+        weight = min(max(weight, 50.0), 150.0)
+        G.mhapi.modifiers.setWeight(weight)
+
+    @factory.register(
+        "set_muscle",
+        "Set the human's muscle",
+        ["value", float, 0, "parameter value (between 0%% and 100%%"])
+    def setMuscle(self, muscle):
+        muscle = min(max(muscle, 0.0), 100.0)
+        G.mhapi.modifiers.setMuscle(muscle)
+
+    @factory.register(
+        "set_height",
+        "Set the human's height",
+        ["value", float, 0, "parameter value (in cm)"])
+    def setHeight(self, height):
+        G.mhapi.modifiers.setHeight(height)
+
+    @factory.register(
+        "set_gender",
+        "Set the human's gender",
+        ["value", float, 0, "parameter value (100%% is female and 0%% is male"])
+    def setGender(self, gender):
+        gender = min(max(gender, 0.0), 100.0)
+        G.mhapi.modifiers.setGender(gender)
 
 
+    """ Pose/Animate :: Skeleton
+    """
     @factory.register(
         "set_skeleton",
-        "Set the humans skeleton from the specified .mhskel file",
+        "Set the human's skeleton from the specified .mhskel file",
         ["skel_path", str, "data/rigs/game_engine.mhskel", "path to .mhskel file"])
     def set_human_skeleton(self, skel_path):
         self.skel_lib.filechooser.onFileSelected(skel_path)
+
+
+    """ Pose/Animate :: Pose
+    """
+    @factory.register(
+        "set_pose",
+        "Set the human's pose to the specified bvh file",
+        ["pose_path", str, "data/poses/tpose.bvh", "path to pose file"])
+    def set_human_pose(self, pose_path):
+        self.pose_lib.filechooser.onFileSelected(pose_path)
 
 
 
