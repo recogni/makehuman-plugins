@@ -17,6 +17,7 @@ class MHServerTaskView(gui3d.TaskView):
     human  = None   # Reference to the in-scene human
     toggle = None   # Toggle button for server enable / disable
     logbox = None   # Log view of any server spew
+    server = None   # ServerThread instance
 
 
     def __init__(self, category):
@@ -45,12 +46,13 @@ class MHServerTaskView(gui3d.TaskView):
         """ Logs a message to the text box `log`.
         """
         self.logbox.addText(msg + "\n")
+        if self.server:
+            self.server.broadcast(str(msg))
 
 
     def command(self, msg, conn=None):
-        words = str(msg).split(" ")
+        words     = str(msg).split(" ")
         cmd, args = words[0], words[1:]
-        self.log("Got cmd=%s args=%s" % (cmd, args))
         factory.run(self, cmd, args)
 
 

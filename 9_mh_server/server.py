@@ -110,6 +110,19 @@ class ServerThread(QThread):
         if sock in self.sockets:
             self.sockets.remove(sock)
 
+    def broadcast(self, msg):
+        """ `broadcast` sends a message to all connected sockets.
+
+            WARNING: Unless you particularly like infinite loops, do NOT call
+                     ANY other class or parent class methods here.  In the
+                     event that they log something, we will be :(.
+        """
+        for sock in self.sockets:
+            try:
+                sock.write_message(msg)
+            except:
+                pass
+
     def command(self, message):
         """ `command` emits the `message` as a signal to the taskview thread.
         """
