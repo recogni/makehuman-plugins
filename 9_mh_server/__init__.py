@@ -40,7 +40,7 @@ class MHServerTaskView(gui3d.TaskView):
         self.logbox.setText("")
         self.logbox.setLineWrapMode(gui.DocumentEdit.NoWrap)
 
-        factory.register_command("debug", "Debug command", self.debug)
+        # factory.register_command("debug", "Debug command", self.debug)
 
 
     def log(self, msg):
@@ -49,7 +49,7 @@ class MHServerTaskView(gui3d.TaskView):
         self.logbox.addText(msg + "\n")
 
 
-    def evaluate(self, msg, conn=None):
+    def command(self, msg, conn=None):
         words = msg.split(" ")
         cmd, args = words[0], words[1:]
         self.log("Got cmd=%s args=%s" % (cmd, args))
@@ -60,7 +60,7 @@ class MHServerTaskView(gui3d.TaskView):
         self.log("Trying to start server thread ...")
         self.server = ServerThread(port=int(self.txt_port.text, 10))
         self.logbox.connect(self.server, SIGNAL("log(QString)"), self.log)
-        self.logbox.connect(self.server, SIGNAL("evaluate(QString)"), self.evaluate)
+        self.logbox.connect(self.server, SIGNAL("command(QString)"), self.command)
 
         self.server.set_taskview(self)
         self.server.start()

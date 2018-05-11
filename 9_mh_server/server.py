@@ -19,47 +19,67 @@ MAX_BUF_SIZE = 8192
 ################################################################################
 
 def CommandHandler(qt):
-    class _handler(tornado.web.RequestHandler):
+    """ `CommandHandler` wraps a HTTP POST request.
+
+        HTTP POST /command
+    """
+    class _handler(web.RequestHandler):
         def get(self):
             self.write("/command only supports POST requests\r\n")
         def post(self):
             if self.request and self.request.body:
                 qt.log("HTTP POST / %s" % (self.request.body))
-                qt.emit(SIGNAL("evaluate(QString)"), QString(self.request.body))
+                qt.queue_command(self.request.body)
                 self.write("OK")
     return _handler
 
+################################################################################
+
+def SocketHandler(qt):
+    """ `SocketHandler` wraps a websocket connection.
+
+        HTTP GET /ws
+    """
+    class _handler(web.WebSocketHandler):
+        def check_origin(self, origin):
+            return True
+        def open(self):
+            qt.log("new socket open ...")
+            qt.register_socket(self)
+        def on_close(self):
+            qt.remove_socket(self)
+        def on_message(self, msg):
+            qt.log("Got socket command: %s" % (msg))
+            qt.queue_command(msg)
+    return _handler
 
 ################################################################################
 
 class ServerThread(QThread):
     """ ServerThread abstracts a threaded server using `QThread`s.
     """
-    parent = None
-    port   = None
-    app    = None
-
+    taskview = None
+    port     = None
+    app      = None
+    sockets  = []
 
     def __init__(self, parent=None, port=18830):
+        """ ServerThread constructor.
+        """
         QThread.__init__(self, parent)
         self.port = port
 
-
-    def set_taskview(self, tv):
-        self.taskview = tv
-
-
-    def log(self, message):
-        self.emit(SIGNAL("log(QString)"), QString(message))
-        print message
-
-
     def run(self):
-        """ run is invoked in a separate "QThread", this will terminate once
-            the `needs_exit` boolean is setup (or if there is a failure during
-            bind / startup).
+        """ `run` is invoked when the QThread is started.
+
+            Note that this is called on a separate thread and any `mh` APIs
+            that modify or query the human must be executed in the main thread.
+
+            This is done by invoking the `command` signal to the `TaskView`.
         """
+        self.sockets = []
         self.app = tornado.web.Application([
+            (r"/ws",      SocketHandler(self)),
             (r"/command", CommandHandler(self)),
         ])
 
@@ -67,9 +87,41 @@ class ServerThread(QThread):
         self.app.listen(self.port)
         tornado.ioloop.IOLoop.current().start()
 
+    def set_taskview(self, tv):
+        """ `set_taskview` is called by the `TaskView`.  For some reason the
+            `parent` property in `__init__` is None.  There must be a more
+            elegant way to grab this info.
+        """
+        self.taskview = tv
+
+    def add_socket(self, sock):
+        """ `add_socket` allows the socket handler to register a newly connected
+            socket with the server.
+        """
+        if sock not in self.sockets:
+            self.sockets.append(sock)
+
+    def remove_socket(self, sock):
+        """ `remove_socket` removes a disconnected socket from the server's
+            socket list.
+        """
+        if sock in self.sockets:
+            self.sockets.remove(sock)
+
+    def command(self, message):
+        """ `command` emits the `message` as a signal to the taskview thread.
+        """
+        self.emit(SIGNAL("command(QString)"), QString(message))
+
+    def log(self, message):
+        """ `log` logs a message to the taskview.
+        """
+        self.emit(SIGNAL("log(QString)"), QString(message))
+        print message
 
     def stop(self):
+        """ `stop` stops the server socket.
+        """
         if self.app:
             self.log("Server shutting down ...")
             self.app.stop()
-
