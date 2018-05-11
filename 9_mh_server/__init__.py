@@ -40,8 +40,6 @@ class MHServerTaskView(gui3d.TaskView):
         self.logbox.setText("")
         self.logbox.setLineWrapMode(gui.DocumentEdit.NoWrap)
 
-        # factory.register_command("debug", "Debug command", self.debug)
-
 
     def log(self, msg):
         """ Logs a message to the text box `log`.
@@ -50,7 +48,7 @@ class MHServerTaskView(gui3d.TaskView):
 
 
     def command(self, msg, conn=None):
-        words = msg.split(" ")
+        words = str(msg).split(" ")
         cmd, args = words[0], words[1:]
         self.log("Got cmd=%s args=%s" % (cmd, args))
         factory.run(self, cmd, args)
@@ -82,9 +80,12 @@ class MHServerTaskView(gui3d.TaskView):
 
     @factory.register(
         ["test", "debug"],
-        "Test / debug command")
-    def debug(self, args):
-        self.log("Got debug args: %s" % (args))
+        "Test / debug command",
+        ["x", int, 1, "x value"],
+        ["y", int, 2, "y value"],
+        ["z", int, 3, "z value"])
+    def debug(self, x, y, z):
+        self.log("Got debug(%d, %d, %d)" % (x, y, z))
 
 ################################################################################
 
