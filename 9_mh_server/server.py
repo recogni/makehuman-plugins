@@ -5,7 +5,7 @@ import json
 import time
 
 import tornado
-from tornado import ioloop, web
+from tornado import ioloop, web, websocket, httpserver
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -29,7 +29,7 @@ def CommandHandler(qt):
         def post(self):
             if self.request and self.request.body:
                 qt.log("HTTP POST / %s" % (self.request.body))
-                qt.queue_command(self.request.body)
+                qt.command(self.request.body)
                 self.write("OK")
     return _handler
 
@@ -40,7 +40,7 @@ def SocketHandler(qt):
 
         HTTP GET /ws
     """
-    class _handler(web.WebSocketHandler):
+    class _handler(websocket.WebSocketHandler):
         def check_origin(self, origin):
             return True
         def open(self):
@@ -50,7 +50,7 @@ def SocketHandler(qt):
             qt.remove_socket(self)
         def on_message(self, msg):
             qt.log("Got socket command: %s" % (msg))
-            qt.queue_command(msg)
+            qt.command(msg)
     return _handler
 
 ################################################################################
@@ -61,6 +61,7 @@ class ServerThread(QThread):
     taskview = None
     port     = None
     app      = None
+    server   = None
     sockets  = []
 
     def __init__(self, parent=None, port=18830):
@@ -82,9 +83,10 @@ class ServerThread(QThread):
             (r"/ws",      SocketHandler(self)),
             (r"/command", CommandHandler(self)),
         ])
+        self.server = httpserver.HTTPServer(self.app)
 
         self.log("Server listening on port :%d" % (self.port))
-        self.app.listen(self.port)
+        self.server.listen(self.port)
         tornado.ioloop.IOLoop.current().start()
 
     def set_taskview(self, tv):
@@ -122,6 +124,6 @@ class ServerThread(QThread):
     def stop(self):
         """ `stop` stops the server socket.
         """
-        if self.app:
+        if self.server:
             self.log("Server shutting down ...")
-            self.app.stop()
+            self.server.stop()

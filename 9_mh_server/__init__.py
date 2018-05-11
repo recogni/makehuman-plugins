@@ -80,9 +80,9 @@ class MHServerTaskView(gui3d.TaskView):
         self.start_server()
 
 
-    # @factory.register(
-    #     ["test", "debug"],
-    #     "Test / debug command")
+    @factory.register(
+        ["test", "debug"],
+        "Test / debug command")
     def debug(self, args):
         self.log("Got debug args: %s" % (args))
 

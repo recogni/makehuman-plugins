@@ -5,6 +5,7 @@
 
 command_map = dict()
 
+
 def register(name, description, *arg_descs):
     """ Decorator for functions which we want to expose commands for.
     """
@@ -20,7 +21,7 @@ def register(name, description, *arg_descs):
 
         for n in akas:
             if n not in command_map:
-                print "registering %s" % (n)
+                print "!!!!!!! registering %s" % (n)
                 command_map[n] = {
                     "function":    fn,
                     "description": description,
@@ -31,7 +32,7 @@ def register(name, description, *arg_descs):
 
 def register_command(name, description, fn):
     if name not in command_map:
-        print "Registering %s" % (name)
+        print "!!!!!!! registering %s" % (name)
         command_map[name] = {
             "function": fn,
             "description": description,
