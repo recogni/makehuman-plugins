@@ -6,7 +6,7 @@ import mh
 from core import G
 
 from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from PyQt4.QtGui  import *
 
 from server import ServerThread
 
@@ -40,6 +40,8 @@ class MHServerTaskView(gui3d.TaskView):
         self.logbox.setText("")
         self.logbox.setLineWrapMode(gui.DocumentEdit.NoWrap)
 
+        factory.register_command("debug", "Debug command", self.debug)
+
 
     def log(self, msg):
         """ Logs a message to the text box `log`.
@@ -47,9 +49,11 @@ class MHServerTaskView(gui3d.TaskView):
         self.logbox.addText(msg + "\n")
 
 
-    def evaluate(self, data, conn=None):
-        self.log("Got data: %s" % (str(data)))
-        print self.human.mesh
+    def evaluate(self, msg, conn=None):
+        words = msg.split(" ")
+        cmd, args = words[0], words[1:]
+        self.log("Got cmd=%s args=%s" % (cmd, args))
+        factory.run(self, cmd, args)
 
 
     def start_server(self):
@@ -76,17 +80,21 @@ class MHServerTaskView(gui3d.TaskView):
         self.start_server()
 
 
+    # @factory.register(
+    #     ["test", "debug"],
+    #     "Test / debug command")
+    def debug(self, args):
+        self.log("Got debug args: %s" % (args))
+
 ################################################################################
 
 class Loader():
     task = None
 
-
     def load(self, app):
         category  = app.getCategory("MHServer")
         self.task = category.addTask(MHServerTaskView(category))
         self.task.start_server()
-
 
     def unload(self, app):
         if self.task:

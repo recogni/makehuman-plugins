@@ -26,23 +26,24 @@ def register(name, description, *arg_descs):
                     "description": description,
                 }
         return fn
-
     return wrapper
 
 
-def get_routes():
-    return []
+def register_command(name, description, fn):
+    if name not in command_map:
+        print "Registering %s" % (name)
+        command_map[name] = {
+            "function": fn,
+            "description": description,
+        }
 
 
-# TODO: This is not needed
-def run(taskview, jc):
-    cmd = jc.getFunction()
+def run(taskview, cmd, cmd_args):
     if cmd not in command_map:
-        err = "invalid command specified %s" % (cmd)
-        taskview.log(err)
-        jc.setError(err)
-        return jc
+        taskview.log("invalid command specified %s" % (cmd))
 
-    args = [taskview]
-    args.append(jc)
-    return command_map[cmd]["function"](*args)
+    args = []
+    for i in cmd_args:
+        args.append(i)
+
+    return command_map[cmd]["function"](args)

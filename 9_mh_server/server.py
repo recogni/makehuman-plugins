@@ -21,12 +21,12 @@ MAX_BUF_SIZE = 8192
 def CommandHandler(qt):
     class _handler(tornado.web.RequestHandler):
         def get(self):
-            print "HTTP GET /"
             self.write("/command only supports POST requests\r\n")
         def post(self):
             if self.request and self.request.body:
-                print "HTTP POST / {%s}" % (self.request.body)
+                qt.log("HTTP POST / %s" % (self.request.body))
                 qt.emit(SIGNAL("evaluate(QString)"), QString(self.request.body))
+                self.write("OK")
     return _handler
 
 
@@ -63,13 +63,13 @@ class ServerThread(QThread):
             (r"/command", CommandHandler(self)),
         ])
 
-        print "Server listening on port :%d" % (self.port)
+        self.log("Server listening on port :%d" % (self.port))
         self.app.listen(self.port)
         tornado.ioloop.IOLoop.current().start()
 
 
     def stop(self):
         if self.app:
-            print "Server shutting down ..."
+            self.log("Server shutting down ...")
             self.app.stop()
 
