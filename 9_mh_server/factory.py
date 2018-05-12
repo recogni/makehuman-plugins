@@ -54,7 +54,7 @@ def run(tv, cmd, args):
     entry     = command_map[cmd]
     function  = functools.partial(entry["function"], tv)
     arguments = entry["arguments"]
-    i         = 0
+    i         = -1
 
     if len(args) > len(arguments):
         args = args[:len(arguments)]
@@ -83,6 +83,7 @@ def run(tv, cmd, args):
             function = functools.partial(function, de)
             pass
 
+    i += 1
     while i < len(arguments):
         function = functools.partial(function, arguments[i][2])
         i += 1

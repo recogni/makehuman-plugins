@@ -46,8 +46,18 @@ class MHServerTaskView(gui3d.TaskView):
         """ `bootstrap` allows this TaskView to figure out dependent task views
             to trigger downstream functions.
         """
-        self.pose_lib = app.getTask("Pose/Animate", "Pose")
-        self.skel_lib = app.getTask("Pose/Animate", "Skeleton")
+
+        self.pose_lib       = app.getTask("Pose/Animate", "Pose")
+        self.skel_lib       = app.getTask("Pose/Animate", "Skeleton")
+
+        self.clothes_lib    = app.getTask("Geometries", "Clothes")
+        self.eyebrows_lib   = app.getTask("Geometries", "Eyebrows")
+        self.eyes_lib       = app.getTask("Geometries", "Eyes")
+        self.topologies_lib = app.getTask("Geometries", "Topologies")
+        self.eyelashes_lib  = app.getTask("Geometries", "Eyelashes")
+        self.hair_lib       = app.getTask("Geometries", "Hair")
+        self.teeth_lib      = app.getTask("Geometries", "Teeth")
+        self.tongue_lib     = app.getTask("Geometries", "Tongue")
 
 
     def log(self, msg):
@@ -100,7 +110,7 @@ class MHServerTaskView(gui3d.TaskView):
         "set_age",
         "Set the human's age",
         ["value", float, 0, "parameter value (between 1.0 and 90.0"])
-    def setAge(self, age):
+    def set_age(self, age):
         age = min(max(age, 1.0), 90.0)
         G.mhapi.modifiers.setAge(age)
 
@@ -108,7 +118,7 @@ class MHServerTaskView(gui3d.TaskView):
         "set_weight",
         "Set the human's weight",
         ["value", float, 0, "parameter value (between 50%% and 150%%"])
-    def setWeight(self, weight):
+    def set_weight(self, weight):
         weight = min(max(weight, 50.0), 150.0)
         G.mhapi.modifiers.setWeight(weight)
 
@@ -116,7 +126,7 @@ class MHServerTaskView(gui3d.TaskView):
         "set_muscle",
         "Set the human's muscle",
         ["value", float, 0, "parameter value (between 0%% and 100%%"])
-    def setMuscle(self, muscle):
+    def set_muscle(self, muscle):
         muscle = min(max(muscle, 0.0), 100.0)
         G.mhapi.modifiers.setMuscle(muscle)
 
@@ -124,17 +134,106 @@ class MHServerTaskView(gui3d.TaskView):
         "set_height",
         "Set the human's height",
         ["value", float, 0, "parameter value (in cm)"])
-    def setHeight(self, height):
+    def set_height(self, height):
         G.mhapi.modifiers.setHeight(height)
 
     @factory.register(
         "set_gender",
         "Set the human's gender",
         ["value", float, 0, "parameter value (100%% is female and 0%% is male"])
-    def setGender(self, gender):
+    def set_gender(self, gender):
         gender = min(max(gender, 0.0), 100.0)
         G.mhapi.modifiers.setGender(gender)
 
+    """ ------------------------------------------------------------------- """
+
+    """ Geometries :: Clothes
+    """
+    @factory.register(
+        "add_clothes",
+        "Set the human's clothes -- these are addititve (see remove_clothes)",
+        ["clothes_path", str, "data/clothes/male_casualsuit02/male_casualsuit02.mhclo", "path to clothes file"])
+    def add_clothes(self, clothes_path):
+        self.clothes_lib.selectProxy(clothes_path)
+
+    @factory.register(
+        "remove_clothes",
+        "Remove the human's clothes -- these are addititve (see add_clothes)",
+        ["clothes_path", str, "data/clothes/male_casualsuit02/male_casualsuit02.mhclo", "path to clothes file"])
+    def remove_clothes(self, clothes_path):
+        self.clothes_lib.deselectProxy(clothes_path)
+
+
+    """ Geometries :: Eyes
+    """
+    @factory.register(
+        "set_eyes",
+        "Set the human's eyes -- should always set low-poly",
+        ["eyes_path", str, "data/eyes/low-poly/low-poly.mhclo", "path to eyes file"])
+    def set_eyes(self, eyes_path):
+        self.eyes_lib.selectProxy(eyes_path)
+
+
+    """ Geometries :: Hair
+    """
+    @factory.register(
+        "set_hair",
+        "Set the human's hair",
+        ["hair_path", str, "data/hair/afro01/afro01.mhclo", "path to hair file"])
+    def set_hair(self, hair_path):
+        self.hair_lib.selectProxy(hair_path)
+
+
+    """ Geometries :: Teeth
+    """
+    @factory.register(
+        "set_teeth",
+        "Set the human's teeth",
+        ["teeth_path", str, "data/teeth/teeth_shape01/teeth_shape01.mhclo", "path to teeth file"])
+    def set_teeth(self, teeth_path):
+        self.teeth_lib.selectProxy(teeth_path)
+
+
+    """ Geometries :: Topologies
+    """
+    @factory.register(
+        "set_topologies",
+        "Set the human's topologies",
+        ["topologies_path", str, "", "path to topologies file"])
+    def set_topologies(self, topologies_path):
+        self.topologies_lib.selectProxy(topologies_path)
+
+
+    """ Geometries :: Eyebrows
+    """
+    @factory.register(
+        "set_eyebrows",
+        "Set the human's eyebrows",
+        ["eyebrows_path", str, "data/eyebrows/eyebrow001/eyebrow001.mhclo", "path to eyebrows file"])
+    def set_eyebrows(self, eyebrows_path):
+        self.eyebrows_lib.selectProxy(eyebrows_path)
+
+
+    """ Geometries :: Eyelashes
+    """
+    @factory.register(
+        "set_eyelashes",
+        "Set the human's eyelashes",
+        ["eyelashes_path", str, "data/eyelashes/eyelashes02/eyelashes02.mhclo", "path to eyelashes file"])
+    def set_eyelashes(self, eyelashes_path):
+        self.eyelashes_lib.selectProxy(eyelashes_path)
+
+
+    """ Geometries :: Tongue
+    """
+    @factory.register(
+        "set_tongue",
+        "Set the human's tongue",
+        ["tongue_path", str, None, "path to tongue file"])
+    def set_tongue(self, tongue_path):
+        self.tongue_lib.selectProxy(tongue_path)
+
+    """ ------------------------------------------------------------------- """
 
     """ Pose/Animate :: Skeleton
     """
@@ -142,7 +241,7 @@ class MHServerTaskView(gui3d.TaskView):
         "set_skeleton",
         "Set the human's skeleton from the specified .mhskel file",
         ["skel_path", str, "data/rigs/game_engine.mhskel", "path to .mhskel file"])
-    def set_human_skeleton(self, skel_path):
+    def set_skeleton(self, skel_path):
         self.skel_lib.filechooser.onFileSelected(skel_path)
 
 
@@ -152,8 +251,9 @@ class MHServerTaskView(gui3d.TaskView):
         "set_pose",
         "Set the human's pose to the specified bvh file",
         ["pose_path", str, "data/poses/tpose.bvh", "path to pose file"])
-    def set_human_pose(self, pose_path):
+    def set_pose(self, pose_path):
         self.pose_lib.filechooser.onFileSelected(pose_path)
+
 
 
 
